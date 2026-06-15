@@ -15,7 +15,6 @@ import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.Modifier;
-import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jface.text.BadLocationException;
@@ -94,9 +93,9 @@ public class ModifiersOrderOperation implements ASTOperation {
     List<IExtendedModifier> allModifiers = bodyDecl.modifiers();
 
     List<Modifier> keywordModifiers = allModifiers.stream()
-        .filter(m -> m instanceof Modifier)
+        .filter(Modifier.class::isInstance)
         .map(m -> (Modifier) m)
-        .collect(Collectors.toList());
+        .toList();
 
     if (keywordModifiers.size() < 2) {
       return;
@@ -104,7 +103,7 @@ public class ModifiersOrderOperation implements ASTOperation {
 
     List<Modifier.ModifierKeyword> currentOrder = keywordModifiers.stream()
         .map(Modifier::getKeyword)
-        .collect(Collectors.toList());
+        .toList();
 
     List<Modifier.ModifierKeyword> sortedOrder = new ArrayList<>(currentOrder);
     sortedOrder.sort(Comparator.comparingInt(k -> {
@@ -118,8 +117,8 @@ public class ModifiersOrderOperation implements ASTOperation {
 
     log.info("Reordering modifiers in [{}]: {} -> {}",
         AstraUtils.getNameForCompilationUnit(compilationUnit),
-        currentOrder.stream().map(k -> k.toString()).collect(Collectors.joining(" ")),
-        sortedOrder.stream().map(k -> k.toString()).collect(Collectors.joining(" ")));
+        currentOrder.stream().map(Object::toString).collect(Collectors.joining(" ")),
+        sortedOrder.stream().map(Object::toString).collect(Collectors.joining(" ")));
 
     ChildListPropertyDescriptor modifiersProperty = findModifiersProperty(bodyDecl);
     if (modifiersProperty == null) {
@@ -143,14 +142,11 @@ public class ModifiersOrderOperation implements ASTOperation {
    * (MethodDeclaration.MODIFIERS2_PROPERTY, FieldDeclaration.MODIFIERS2_PROPERTY, etc.)
    * which are distinct objects even though they share the same semantics.
    */
-  @SuppressWarnings("rawtypes")
   private static ChildListPropertyDescriptor findModifiersProperty(ASTNode node) {
     for (Object prop : node.structuralPropertiesForType()) {
-      if (prop instanceof ChildListPropertyDescriptor) {
-        ChildListPropertyDescriptor clpd = (ChildListPropertyDescriptor) prop;
-        if ("modifiers".equals(clpd.getId())) {
-          return clpd;
-        }
+      if (prop instanceof ChildListPropertyDescriptor clpd &&
+          "modifiers".equals(clpd.getId())) {
+        return clpd;
       }
     }
     return null;

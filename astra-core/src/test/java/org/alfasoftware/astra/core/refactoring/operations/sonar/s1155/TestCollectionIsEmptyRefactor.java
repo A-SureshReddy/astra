@@ -3,7 +3,6 @@ package org.alfasoftware.astra.core.refactoring.operations.sonar.s1155;
 import java.util.Collections;
 
 import org.alfasoftware.astra.core.refactoring.AbstractRefactorTest;
-import org.alfasoftware.astra.core.refactoring.operations.sonar.s1155.CollectionIsEmptyRefactor;
 import org.junit.Test;
 
 public class TestCollectionIsEmptyRefactor extends AbstractRefactorTest {

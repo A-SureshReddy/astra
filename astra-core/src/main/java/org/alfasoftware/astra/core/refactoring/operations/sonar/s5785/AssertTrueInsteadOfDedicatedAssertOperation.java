@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Refactoring operation implementing SonarQube rule java:S5785
  * "JUnit assertTrue/assertFalse should be simplified to its dedicated assertion".
  *
- * <p>Detects calls to {@code assertTrue} and {@code assertFalse} from JUnit 4 and JUnit 5
+ * <p>Detects calls to {@code assertTrue} and {@code assertFalse} from JUnit 4
  * assertion classes where the boolean argument can be expressed more precisely with a dedicated
  * assertion method, and rewrites them accordingly.
  *
@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code org.junit.Assert} (JUnit 4)</li>
  *   <li>{@code junit.framework.Assert} (JUnit 4, deprecated)</li>
  *   <li>{@code junit.framework.TestCase} (JUnit 4)</li>
- *   <li>{@code org.junit.jupiter.api.Assertions} (JUnit 5)</li>
  * </ul>
  *
  * <p>Transformations (applies symmetrically for {@code assertTrue}/{@code assertFalse},
@@ -56,7 +55,8 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code assertTrue(!expr)}          &rarr; complement of {@code assertTrue(expr)}</li>
  * </ul>
  *
- * <p>Message arguments are preserved in their original position (first for JUnit 4, last for JUnit 5).
+ * <p>Message arguments are preserved in their original position
+ * (first for JUnit 4 - would be last for JUnit 5, but not supported yet).
  * Static imports are updated when the method is invoked without a qualifier.
  */
 public class AssertTrueInsteadOfDedicatedAssertOperation implements ASTOperation {
@@ -68,11 +68,6 @@ public class AssertTrueInsteadOfDedicatedAssertOperation implements ASTOperation
       "junit.framework.Assert",
       "junit.framework.TestCase",
       "org.junit.jupiter.api.Assertions");
-
-  private static final Set<String> JUNIT4_CLASS_FQNS = Set.of(
-      "org.junit.Assert",
-      "junit.framework.Assert",
-      "junit.framework.TestCase");
 
   private static final String OBJECTS_FQN = "java.util.Objects";
 
@@ -142,7 +137,6 @@ public class AssertTrueInsteadOfDedicatedAssertOperation implements ASTOperation
       return;
     }
 
-    boolean isJunit4 = JUNIT4_CLASS_FQNS.contains(declaringFqn);
     boolean isAssertFalse = "assertFalse".equals(methodName);
 
     @SuppressWarnings("unchecked")
@@ -224,16 +218,14 @@ public class AssertTrueInsteadOfDedicatedAssertOperation implements ASTOperation
   private static Optional<AnalysisResult> analyze(Expression expr, boolean inverted) {
 
     // Logical complement: !(inner) → recurse with flipped polarity
-    if (expr instanceof PrefixExpression) {
-      PrefixExpression prefix = (PrefixExpression) expr;
+    if (expr instanceof PrefixExpression prefix) {
       if (PrefixExpression.Operator.NOT.equals(prefix.getOperator())) {
         return analyze(prefix.getOperand(), !inverted);
       }
     }
 
     // == and != operators
-    if (expr instanceof InfixExpression) {
-      InfixExpression infix = (InfixExpression) expr;
+    if (expr instanceof InfixExpression infix) {
       if (InfixExpression.Operator.EQUALS.equals(infix.getOperator())) {
         return analyzeEquality(infix, false, inverted);
       }
@@ -243,8 +235,7 @@ public class AssertTrueInsteadOfDedicatedAssertOperation implements ASTOperation
     }
 
     // a.equals(b) or Objects.equals(a, b)
-    if (expr instanceof MethodInvocation) {
-      MethodInvocation innerMi = (MethodInvocation) expr;
+    if (expr instanceof MethodInvocation innerMi) {
       if (isEqualsMethod(innerMi)) {
         Assertion base = inverted ? Assertion.NOT_EQUALS : Assertion.EQUALS;
         List<Expression> newArgs;

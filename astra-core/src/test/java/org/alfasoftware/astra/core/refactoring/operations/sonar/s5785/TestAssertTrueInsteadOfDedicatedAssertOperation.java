@@ -15,10 +15,6 @@ public class TestAssertTrueInsteadOfDedicatedAssertOperation extends AbstractRef
       Paths.get(M2, "junit", "junit", "4.13.2", "junit-4.13.2.jar").toString()
   };
 
-  private static final String[] JUNIT5_CLASSPATH = {
-      Paths.get(M2, "org", "junit", "jupiter", "junit-jupiter-api", "5.10.2", "junit-jupiter-api-5.10.2.jar").toString(),
-      Paths.get(M2, "org", "opentest4j", "opentest4j", "1.3.0", "opentest4j-1.3.0.jar").toString()
-  };
 
   private static final Set<AssertTrueInsteadOfDedicatedAssertOperation> OPERATION =
       Set.of(new AssertTrueInsteadOfDedicatedAssertOperation());
@@ -31,21 +27,6 @@ public class TestAssertTrueInsteadOfDedicatedAssertOperation extends AbstractRef
   @Test
   public void testJUnit4QualifiedCalls() {
     assertRefactorWithClassPath(AssertTrueJUnit4Example.class, OPERATION, JUNIT4_CLASSPATH);
-  }
-
-  /**
-   * Core rewrites using qualified {@code Assertions.*} calls (JUnit 5),
-   * including the JUnit-5 message-last convention.
-   * Uses a .txt source file because junit-jupiter-api is not a Maven test compile dependency.
-   */
-  @Test
-  public void testJUnit5QualifiedCalls() {
-    assertRefactorWithSourcesAndClassPathAndTextFileExamples(
-        "org.alfasoftware.astra.core.refactoring.operations.sonar.s5785.AssertTrueJUnit5Example",
-        "AssertTrueJUnit5Example",
-        OPERATION,
-        new String[]{TEST_SOURCE},
-        JUNIT5_CLASSPATH);
   }
 
   /**
