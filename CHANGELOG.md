@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 * Added `AssertTrueInsteadOfDedicatedAssertOperation` implementing SonarQube rule java:S5785 — rewrites `assertTrue`/`assertFalse` calls to dedicated assertion methods (`assertNull`, `assertNotNull`, `assertEquals`, `assertNotEquals`, `assertSame`, `assertNotSame`) for JUnit 4 and JUnit 5
 
+### Fixed
+* `JavaPatternASTOperation` (the Java Pattern refactor engine) now fails fast instead of silently producing incorrect output in two cases: a `@JavaPatternReplacement` method body with more than one statement (previously all but the first statement were silently dropped), and a candidate AST node matching more than one `@JavaPattern` in the same matcher file (previously this could cause the same node to be rewritten twice)
+
 ## [2.7.0] - 2026-04-28
 ### Changed
 * Updated Java compatibility to 17 (#139) in https://github.com/alfasoftware/astra/pull/140

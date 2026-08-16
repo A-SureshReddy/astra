@@ -109,7 +109,11 @@ class JavaPatternFileParser {
 
   private ASTNode parsePatternToRefactorTo(MethodDeclarationVisitor visitor) {
     final MethodDeclaration methodToRefactorTo = parseMethodAnnotatedWithJavaPatternReplacement(visitor);
-    final Statement statement = (Statement) methodToRefactorTo.getBody().statements().get(0);
+    final List<Statement> statements = methodToRefactorTo.getBody().statements();
+    if (statements.size() != 1) {
+      throw new IllegalArgumentException("The method annotated with @JavaPatternReplacement must have exactly one statement in its body, describing the replacement expression");
+    }
+    final Statement statement = statements.get(0);
     ASTNode parsedPatternToRefactorTo;
     if (statement instanceof ReturnStatement) {
       parsedPatternToRefactorTo = ((ReturnStatement) statement).getExpression();
