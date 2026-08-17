@@ -51,6 +51,10 @@ class JavaPatternASTMatcher {
         foundMatches.add(javaPatternMatcher.getNodeMatch());
       }
     }
+    if (foundMatches.size() > 1) {
+      throw new IllegalStateException("Ambiguous match: more than one @JavaPattern in the matcher file matched the same node \""
+          + matchCandidate + "\". Each candidate node must match at most one @JavaPattern.");
+    }
     return ! foundMatches.isEmpty();
   }
 
