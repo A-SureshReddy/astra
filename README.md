@@ -38,6 +38,7 @@ Astra has been developed and tested at Alfa to improve the velocity at which lar
       </build>
   ```
   Then, as the plugin and version is defined, you can simply invoke `mvn astra:refactor -Dastra.usecase=org.my.MyUseCase`
+  This also applies to `astra-core`'s SPI-only `ASTOperation`s, such as `JavaPatternASTOperation` (refactor-by-example) — see the [astra-maven-plugin README](./astra-maven-plugin/README.md#running-a-javapatternastoperation-refactor-by-example-through-this-plugin) for a worked example.
 
 ## Why would I use Astra?
 A simple and common use case is renaming a method, and updating all the callers of that method so that they use the new name. 
