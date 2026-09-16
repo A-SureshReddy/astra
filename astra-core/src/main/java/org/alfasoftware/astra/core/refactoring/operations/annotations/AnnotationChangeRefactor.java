@@ -10,8 +10,6 @@ import java.util.stream.Collectors;
 import org.alfasoftware.astra.core.matchers.AnnotationMatcher;
 import org.alfasoftware.astra.core.utils.ASTOperation;
 import org.alfasoftware.astra.core.utils.AstraUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -26,6 +24,8 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.text.edits.MalformedTreeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple swap of an annotation, eg,
@@ -43,17 +43,17 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   private final AnnotationMatcher fromType;
   private final String toType;
-  private final Map<String, String> membersAndValuesToAdd;
+  private final Map<String, Object> membersAndValuesToAdd;
   private final Map<String, String> membersAndTypesToAdd;
   private final Set<String> namesForMembersToRemove;
   private final Map<String, String> memberNameUpdates;
-  private final Map<String, String> memberNamesToUpdateWithNewValues;
+  private final Map<String, Object> memberNamesToUpdateWithNewValues;
   private final Optional<Transform> transform;
   private final boolean forceQualifiedName;
 
-  public AnnotationChangeRefactor(AnnotationMatcher fromType, String toType, Map<String, String> membersAndValuesToAdd,
-      Map<String,String> memberAndTypesToAdd, Set<String> namesForMembersToRemove, Map<String, String> memberNameUpdates,
-      Map<String, String> memberNamesToUpdateWithNewValues, Optional<Transform> transform, boolean forceQualifiedName) {
+  public AnnotationChangeRefactor(AnnotationMatcher fromType, String toType, Map<String, Object> membersAndValuesToAdd,
+      Map<String, String> memberAndTypesToAdd, Set<String> namesForMembersToRemove, Map<String, String> memberNameUpdates,
+      Map<String, Object> memberNamesToUpdateWithNewValues, Optional<Transform> transform, boolean forceQualifiedName) {
     this.fromType = fromType;
     this.toType = toType;
     this.membersAndValuesToAdd = membersAndValuesToAdd;
@@ -86,12 +86,12 @@ public class AnnotationChangeRefactor implements ASTOperation {
   public static class Builder {
     private AnnotationMatcher fromType;
     private String toType;
-    private Map<String, String> membersAndValuesToAdd = Map.of();
+    private Map<String, Object> membersAndValuesToAdd = Map.of();
     private Map<String, String> membersAndTypesToAdd = Map.of();
     private Set<String> namesForMembersToRemove = Set.of();
     private Map<String, String> memberNameUpdates = Map.of();
     private Optional<Transform> transform = Optional.empty();
-    private Map<String, String> memberNamesToUpdateWithNewValues = Map.of();
+    private Map<String, Object> memberNamesToUpdateWithNewValues = Map.of();
     private boolean forceQualifiedName;
 
     private Builder() {
@@ -109,7 +109,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
-    public Builder addMemberNameValuePairs(Map<String, String> membersAndValuesToAdd) {
+    public Builder addMemberNameValuePairs(Map<String, Object> membersAndValuesToAdd) {
       this.membersAndValuesToAdd = membersAndValuesToAdd;
       return this;
     }
@@ -129,7 +129,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
       return this;
     }
 
-    public Builder updateMembersWithNameToValue(Map<String, String> updateNamesToNewValues) {
+    public Builder updateMembersWithNameToValue(Map<String, Object> updateNamesToNewValues) {
       this.memberNamesToUpdateWithNewValues = updateNamesToNewValues;
       return this;
     }
@@ -167,7 +167,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
 
   @FunctionalInterface
   public interface Transform {
-    public void apply(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter);
+    void apply(CompilationUnit compilationUnit, Annotation annotation, ASTRewrite rewriter);
   }
 
 
@@ -323,7 +323,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
     @SuppressWarnings("unchecked")
     final List<MemberValuePair> rewrittenList = listRewrite.getRewrittenList();
     for (MemberValuePair memberValuePair : rewrittenList) {
-      for (Map.Entry<String, String> namesToUpdateEntry : memberNamesToUpdateWithNewValues.entrySet()) {
+      for (Map.Entry<String, Object> namesToUpdateEntry : memberNamesToUpdateWithNewValues.entrySet()) {
         if (namesToUpdateEntry.getKey().equals(memberValuePair.getName().getIdentifier())) {
           ASTNode newArgument = normalAnnotation.getAST().newStringLiteral();
           rewriter.set(newArgument, StringLiteral.ESCAPED_VALUE_PROPERTY, namesToUpdateEntry.getValue(), null);
@@ -363,7 +363,7 @@ public class AnnotationChangeRefactor implements ASTOperation {
   }
 
 
-  private void addMembersToNormalAnnotation(CompilationUnit compilationUnit, ASTRewrite rewriter, NormalAnnotation normalAnnotation, Map<String, String> membersAndValuesToAdd, Map<String, String> membersAndTypesToAdd) {
+  private void addMembersToNormalAnnotation(CompilationUnit compilationUnit, ASTRewrite rewriter, NormalAnnotation normalAnnotation, Map<String, Object> membersAndValuesToAdd, Map<String, String> membersAndTypesToAdd) {
     final ListRewrite listRewrite = rewriter.getListRewrite(normalAnnotation, NormalAnnotation.VALUES_PROPERTY);
     @SuppressWarnings("unchecked")
     List<MemberValuePair> originalMembers = listRewrite.getOriginalList();
@@ -377,7 +377,11 @@ public class AnnotationChangeRefactor implements ASTOperation {
       MemberValuePair newMemberAndValue = rewriter.getAST().newMemberValuePair();
       newMemberAndValue.setName(rewriter.getAST().newSimpleName(entry.getKey()));
       final StringLiteral valueLiteral = rewriter.getAST().newStringLiteral();
-      valueLiteral.setLiteralValue(entry.getValue());
+      if (entry.getValue() instanceof String stringValue) {
+        valueLiteral.setLiteralValue(stringValue);
+      } else {
+        rewriter.set(valueLiteral, StringLiteral.ESCAPED_VALUE_PROPERTY, entry.getValue(), null);
+      }
       newMemberAndValue.setValue(valueLiteral);
       listRewrite.insertLast(newMemberAndValue, null);
     });

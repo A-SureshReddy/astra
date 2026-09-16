@@ -186,7 +186,7 @@ public class TestAnnotationsRefactor extends AbstractRefactorTest {
                 .withFullyQualifiedName(AnnotationA.class.getName())
                 .build())
               .to(AnnotationD.class.getName())
-              .addMemberNameValuePairs(Map.of("othervalue", "BAR"))
+              .addMemberNameValuePairs(Map.of("othervalue", "BAR", "boolvalue", true, "intvalue", 123))
               .build()
       )));
   }
